@@ -55,10 +55,6 @@ RCT_EXPORT_MODULE()
     return dispatch_get_main_queue();
 }
 
-+ (BOOL)requiresMainQueueSetup {
-    return YES;
-}
-
 RCT_EXPORT_METHOD(registerApp:(NSString *)appid
                   :(RCTResponseSenderBlock)callback)
 {
@@ -152,12 +148,6 @@ RCT_EXPORT_METHOD(shareToSession:(NSDictionary *)data
                   :(RCTResponseSenderBlock)callback)
 {
     [self shareToWeixinWithData:data scene:WXSceneSession callback:callback];
-}
-
-RCT_EXPORT_METHOD(shareToFavorite:(NSDictionary *)data
-                  :(RCTResponseSenderBlock)callback)
-{
-    [self shareToWeixinWithData:data scene:WXSceneFavorite callback:callback];
 }
 
 RCT_EXPORT_METHOD(pay:(NSDictionary *)data

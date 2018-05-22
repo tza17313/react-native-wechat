@@ -1,29 +1,35 @@
 {
-  "name": "react-native-wechat",
-  "version": "1.9.9",
-  "description": "react-native library for wechat app",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo 1"
+  "_from": "react-native-wechat@1.9.2",
+  "_id": "react-native-wechat@1.9.2",
+  "_inBundle": false,
+  "_integrity": "sha1-7mWYtxp/Q+WCUuZZJlp080pQBu4=",
+  "_location": "/react-native-wechat",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "version",
+    "registry": true,
+    "raw": "react-native-wechat@1.9.2",
+    "name": "react-native-wechat",
+    "escapedName": "react-native-wechat",
+    "rawSpec": "1.9.2",
+    "saveSpec": null,
+    "fetchSpec": "1.9.2"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+ssh://git@github.com/weflex/react-native-wechat.git"
-  },
-  "keywords": [
-    "wechat",
-    "react",
-    "react-native",
-    "react-component",
-    "ios"
+  "_requiredBy": [
+    "/"
   ],
-  "dependencies": {
-    "events": "1.0.2"
+  "_resolved": "http://registry.npm.taobao.org/react-native-wechat/download/react-native-wechat-1.9.2.tgz",
+  "_shasum": "ee6598b71a7f43e58252e659265a74f34a5006ee",
+  "_spec": "react-native-wechat@1.9.2",
+  "_where": "/Users/rayleigh/dev/baieapp",
+  "author": {
+    "name": "Yorkie Liu",
+    "email": "yorkiefixer@gmail.com"
   },
-  "peerDependencies": {
-    "react-native": ">=0.40"
+  "bugs": {
+    "url": "https://github.com/weflex/react-native-wechat/issues"
   },
-  "author": "Yorkie Liu <yorkiefixer@gmail.com>",
+  "bundleDependencies": false,
   "contributors": [
     {
       "name": "Yorkie Liu",
@@ -34,9 +40,31 @@
       "email": "tdzl2003@gmail.com"
     }
   ],
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/weflex/react-native-wechat/issues"
+  "dependencies": {
+    "events": "1.0.2"
   },
-  "homepage": "https://github.com/weflex/react-native-wechat#readme"
+  "deprecated": false,
+  "description": "react-native library for wechat app",
+  "homepage": "https://github.com/weflex/react-native-wechat#readme",
+  "keywords": [
+    "wechat",
+    "react",
+    "react-native",
+    "react-component",
+    "ios"
+  ],
+  "license": "MIT",
+  "main": "index.js",
+  "name": "react-native-wechat",
+  "peerDependencies": {
+    "react-native": ">=0.40"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/weflex/react-native-wechat.git"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "version": "1.9.2"
 }

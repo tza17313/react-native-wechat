@@ -1,119 +1,286 @@
-<img height="200" src="./weixin.png?raw=true">
+![react-native-wechat logo](./logo.jpg?raw=true)
 
-# React-Native-Wechat
+## Table of Contents
 
-[React Native] bridging library that integrates WeChat SDKs:
+- [Build](#build)
+- [Linking Steps](#linking-steps)
+  - [Linking iOS](#linking-ios)
+  - [Linking Android with Gradle](#linking-android-with-gradle)
+- [API Documentation](#api-documentation)
+  - [`registerApp(appid)`](#registerappappid)
+  - [`registerAppWithDescription(appid, appdesc)`](#registerappappid)
+  - [`isWXAppInstalled()`](#iswxappinstalled)
+  - [`isWXAppSupportApi()`](#iswxappsupportapi)
+  - [`getApiVersion()`](#iswxappsupportapi)
+  - [`openWXApp()`](#openwxapp)
+  - [`sendAuthRequest([scope[, state]])`](#sendauthrequestscope-state)
+  - [`shareToTimeline(data)`](#sharetotimelinedata)
+  - [`shareToSession(data)`](#sharetosessiondata)
+  - [`pay(data)`](#paydata)
+  - [`addListener(eventType, listener[, context])`](#addlistenereventtype-listener-context)
+  - [`once(eventType, listener[, context])`](#onceeventtype-listener-context)
+  - [`removeAllListeners()`](#removealllisteners)
+- [Installation](#installation)
+- [Community](#community)
+- [Who Use It](#who-use-it)
+- [Authors](#authors)
+- [License](#license)
+
+## Build
+
+React-Native bridge static library for WeChat SDK which requires:
 
 - [x] iOS SDK 1.7.2
 - [x] Android SDK 221
 
 And [react-native-wechat] has the following tracking data in open source world:
 
-| NPM | Dependency | Downloads | Build |
-|-----|------------|-----------|-------|
-| [![NPM version][npm-image]][npm-url] | [![Dependency Status][david-image]][david-url] | [![Downloads][downloads-image]][downloads-url] | [![Build Status][travis-image]][travis-url] |
+| type        | badge                                           |
+|-------------|-------------------------------------------------|
+| NPM         | [![NPM version][npm-image]][npm-url]            |
+| Dependency  | [![Dependency Status][david-image]][david-url]  |
+| Downloads   | [![Downloads][downloads-image]][downloads-url]  |
 
-## Table of Contents
+## Linking Steps
 
-- [Get Startted](#get-startted)
-- [API Documentation](#api-documentation)
-- [Installation](#installation)
-- [Community](#community)
-- [Authors](#authors)
-- [License](#license)
+Before using this library to work with your app, you should follow the below steps to link this library with
+your app project, _if there is something that not working, please check the list here_.
 
-## Get Startted
+### Linking iOS
 
-- [Build setup on iOS](./docs/build-setup-ios.md)
-- [Build setup on Android](./docs/build-setup-android.md)
+- Link `RCTWeChat` library from your `node_modules/react-native-wechat/ios` folder like react-native's 
+[Linking Libraries iOS Guidance], Note: _Don't forget to add it to "Build Phases" of your target project_.
+
+- Add the following libraries to your "Link Binary with Libraries":
+
+    ```
+    SystemConfiguration.framework
+    CoreTelephony.framework
+    libsqlite3.0
+    libc++
+    libz
+    ```
+
+- Add "URL Schema" as your app id for "URL type" in `Targets` > `info`, See the following screenshot for the view on your XCode
+    ![Set URL Schema in XCode](https://res.wx.qq.com/open/zh_CN/htmledition/res/img/pic/app-access-guide/ios/image0042168b9.jpg)
+
+- Only for iOS 9, add `wechat` and `weixin` into `LSApplicationQueriesSchemes` in `Targets` > `info` > `Custom iOS Target Properties`.
+
+or edit Info.plist add:
+
+    ```
+    <key>LSApplicationQueriesSchemes</key>
+    <array>
+        <string>weixin</string>
+        <string>wechat</string>
+    </array>
+    ```
+
+
+- Code the following in `AppDelegate.m` of your project to enable [LinkingIOS]
+
+    ```objective-c
+    #import "../Libraries/LinkingIOS/RCTLinkingManager.h"
+    
+    - (BOOL)application:(UIApplication *)application openURL:(NSURL *)url
+    sourceApplication:(NSString *)sourceApplication annotation:(id)annotation
+    {
+      return [RCTLinkingManager application:application openURL:url
+                                sourceApplication:sourceApplication annotation:annotation];
+    }
+    ```
+
+### Linking Android with Gradle
+
+- Add following lines into `android/settings.gradle`
+
+    ```gradle
+    include ':RCTWeChat'
+    project(':RCTWeChat').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-wechat/android')
+    ```
+
+- Add following lines into your `android/app/build.gradle` in section `dependencies`
+
+    ```gradle
+    dependencies {
+      compile project(':RCTWeChat')    // Add this line only.
+    }
+    ```
+
+- Add following lines into `MainActivity.java` or `MainApplication.java`:
+
+    ```java
+    import com.theweflex.react.WeChatPackage;       // Add this line before public class MainActivity
+    ...
+
+    /**
+     * A list of packages used by the app. If the app uses additional views
+     * or modules besides the default ones, add more packages here.
+     */
+    @Override
+    protected List<ReactPackage> getPackages() {
+      return Arrays.<ReactPackage>asList(
+        new MainReactPackage(), 
+        new WeChatPackage()        // Add this line
+      );
+    }
+    ```
+
+- Create a package named 'wxapi' in your application package and a class named 'WXEntryActivity' in it. 
+  This is required to get authorization and sharing response from wechat.
+
+    ```java
+    package your.package.wxapi;
+
+    import android.app.Activity;
+    import android.os.Bundle;
+    import com.theweflex.react.WeChatModule;
+
+    public class WXEntryActivity extends Activity {
+      @Override
+      protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        WeChatModule.handleIntent(getIntent());
+        finish();
+      }
+    }
+    ```
+
+- (Optional) Create a package named 'wxapi' in your application package and a class named 'WXPayEntryActivity'
+  in it. This is required to get payment response from WeChat.
+
+    ```java
+    package your.package.wxapi;
+
+    import android.app.Activity;
+    import android.os.Bundle;
+    import com.theweflex.react.WeChatModule;
+
+    public class WXPayEntryActivity extends Activity {
+      @Override
+      protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        WeChatModule.handleIntent(getIntent());
+        finish();
+      }
+    }
+    ```
+
+- Add activity declare in your AndroidManifest.xml
+
+    ```xml
+    <manifest>
+      <application>
+        <!-- WeChat Auth/Share Activity -->
+        <activity
+          android:name=".wxapi.WXEntryActivity"
+          android:label="@string/app_name"
+          android:exported="true"
+        />
+        <!-- WeChat Payment Activity -->
+        <activity
+          android:name=".wxapi.WXPayEntryActivity"
+          android:label="@string/app_name"
+          android:exported="true"
+        />
+      </application>
+    </manifest>
+    ```
+
+- Add these lines to 'proguard-rules.pro':
+
+    ```pro
+    -keep class com.tencent.mm.sdk.** {
+       *;
+    }
+    ```
 
 ## API Documentation
 
-[react-native-wechat] exposes the promise-based, therefore you could use `Promise`
-or `async/await` to manage your dataflow.
+[react-native-wechat] supports the following methods to get information and do something functions
+with WeChat app.
 
 #### registerApp(appid)
 
-- `appid` {String} the appid you get from WeChat dashboard
-- returns {Boolean} explains if your application is registered done
+You should call this function in global, calling over twice would throw an error.
 
-This method should be called once globally.
+  ```js
+  // If you register here
+  componentDidMount (){
+    wechat.registerApp('your appid')
+  }
+  ```
 
-```js
-import * as WeChat from 'react-native-wechat';
+- {String} `appid` the appid you get from WeChat dashboard
+- returns {Promise} 
 
-WeChat.registerApp('appid');
-```
+#### registerAppWithDescription(appid, appdesc)
 
-#### registerAppWithDescription(appid, description)
+Only available on iOS.
 
-- `appid` {String} the appid you get from WeChat dashboard
-- `description` {String} the description of your app
-- returns {Boolean} explains if your application is registered done
-
-This method is only available on iOS.
+- {String} `appid` the appid you get from WeChat dashboard
+- {String} `appdesc` the description of your app
+- returns {Promise} 
 
 #### isWXAppInstalled() 
 
-- returns {Boolean} if WeChat is installed.
-
 Check if wechat installed in this app.
+
+- returns {Promise} Contain the result.
 
 #### isWXAppSupportApi()
 
-- returns {Boolean}  Contain the result.
-
 Check if wechat support open url.
+
+- returns {Promise}  Contain the result.
 
 #### getApiVersion()
 
-- returns {String}  Contain the result.
-
 Get api version of WeChat SDK.
+
+- returns {Promise}  Contain the result.
 
 #### openWXApp()
 
-- returns {Boolean} 
+Open WeChat app with an optional callback argument.
 
-Open the WeChat app from your application.
+- returns {Promise} 
 
 #### sendAuthRequest([scope[, state]])
 
-- `scope` {Array|String} Scopes of auth request.
-- `state` {String} the state of OAuth2
-- returns {Object}
+Send authentication request, namely login.
 
-Send authentication request, and it returns an object with the 
-following fields:
+- {Array|String} `scope` Scopes of auth request.
+- {String} `state` the state of OAuth2
+- returns {Promise}
 
-| field   | type   | description                         |
+And it returns:
+
+| name    | type   | description                         |
 |---------|--------|-------------------------------------|
-| errCode | Number | Error Code                          |
+| errCode | Number |                                     |
 | errStr  | String | Error message if any error occurred |
 | openId  | String |                                     |
 | code    | String | Authorization code                  |
 | url     | String | The URL string                      |
-| lang    | String | The user language                   |
+| lang    | String | The user language                   | 
 | country | String | The user country                    |
 
-#### class `ShareMetadata`
+#### shareToTimeline(data)
 
-- `type` {Number} type of this message. Can be {news|text|imageUrl|imageFile|imageResource|video|audio|file}
-- `thumbImage` {String} Thumb image of the message, which can be a uri or a resource id.
-- `description` {String} The description about the sharing.
-- `webpageUrl` {String} Required if type equals `news`. The webpage link to share.
-- `imageUrl` {String} Provide a remote image if type equals `image`.
-- `videoUrl` {String} Provide a remote video if type equals `video`.
-- `musicUrl` {String} Provide a remote music if type equals `audio`.
-- `filePath` {String} Provide a local file if type equals `file`.
-- `fileExtension` {String} Provide the file type if type equals `file`.
+Share a message to timeline (朋友圈).
 
-#### shareToTimeline(message)
+- {Object} `data` contain the message to send
+    - {String} `thumbImage` Thumb image of the message, which can be a uri or a resource id.
+    - {String} `type` Type of this message. Can be {news|text|imageUrl|imageFile|imageResource|video|audio|file}
+    - {String} `webpageUrl` Required if type equals `news`. The webpage link to share.
+    - {String} `imageUrl` Provide a remote image if type equals `image`.
+    - {String} `videoUrl` Provide a remote video if type equals `video`.
+    - {String} `musicUrl` Provide a remote music if type equals `audio`.
+    - {String} `filePath` Provide a local file if type equals `file`.
+    - {String} `fileExtension` Provide the file type if type equals `file`.
 
-- `message` {ShareMetadata} This object saves the metadata for sharing
-- returns {Object}
-
-Share a `ShareMetadata` message to timeline(朋友圈) and returns:
+And returns:
 
 | name    | type   | description                         |
 |---------|--------|-------------------------------------|
@@ -135,11 +302,7 @@ try {
   });
   console.log('share text message to time line successful:', result);
 } catch (e) {
-  if (e instanceof WeChat.WechatError) {
-    console.error(e.stack);
-  } else {
-    throw e;
-  }
+  console.error('share text message to time line failed with:', e);
 }
 
 // Code example to share image url:
@@ -156,11 +319,7 @@ try {
   });
   console.log('share image url to time line successful:', result);
 } catch (e) {
-  if (e instanceof WeChat.WechatError) {
-    console.error(e.stack);
-  } else {
-    throw e;
-  }
+  console.log('share image url to time line failed with:', e);
 }
 
 // Code example to share image file:
@@ -188,11 +347,7 @@ try {
   });
   console.log('share image file to time line successful:', result);
 } catch (e) {
-  if (e instanceof WeChat.WechatError) {
-    console.error(e.stack);
-  } else {
-    throw e;
-  }
+  console.error('share image file to time line failed with:', e);
 }
 
 // Code example to share image resource:
@@ -210,11 +365,7 @@ try {
   console.log('share resource image to time line successful', result);
 }
 catch (e) {
-  if (e instanceof WeChat.WechatError) {
-    console.error(e.stack);
-  } else {
-    throw e;
-  }
+  console.error('share resource image to time line failed', e);
 }
 
 // Code example to download an word file from web, then share it to WeChat session
@@ -242,11 +393,7 @@ try {
   });
   console.log('share word file to chat session successful', result);
 } catch (e) {
-  if (e instanceof WeChat.WechatError) {
-    console.error(e.stack);
-  } else {
-    throw e;
-  }
+  console.error('share word file to chat session failed', e);
 }
 
 //android code use ExternalDirectoryPath
@@ -272,38 +419,51 @@ try {
   console.log('share word file to chat session successful', result);
 }
 catch (e) {
-  if (e instanceof WeChat.WechatError) {
-    console.error(e.stack);
-  } else {
-    throw e;
-  }
+  console.error('share word file to chat session failed', e);
 }
 ```
 
-#### shareToSession(message)
+#### shareToSession(data)
 
-- `message` {ShareMetadata} This object saves the metadata for sharing
-- returns {Object}
+Similar to `shareToTimeline` but send message to a friend or a groups.
 
-Similar to `shareToTimeline` but send message to a friend or chat group.
+#### pay(data)
 
-#### pay(payload)
+Create a request to proceeding payment.
 
-- `payload` {Object} the payment data
-  - `partnerId` {String} 商家向财付通申请的商家ID
-  - `prepayId` {String} 预支付订单ID
-  - `nonceStr` {String} 随机串
-  - `timeStamp` {String} 时间戳
-  - `package` {String} 商家根据财付通文档填写的数据和签名
-  - `sign` {String} 商家根据微信开放平台文档对数据做的签名
-- returns {Object}
+```js
+const result = await WeChat.pay(
+  {
+    partnerId: '',  // 商家向财付通申请的商家id
+    prepayId: '',   // 预支付订单
+    nonceStr: '',   // 随机串，防重发
+    timeStamp: '',  // 时间戳，防重发
+    package: '',    // 商家根据财付通文档填写的数据和签名
+    sign: ''        // 商家根据微信开放平台文档对数据做的签名
+  }
+);
+```
 
-Sends request for proceeding payment, then returns an object:
+It returns an object like this:
 
 | name    | type   | description                         |
 |---------|--------|-------------------------------------|
 | errCode | Number | 0 if authorization successed        |
 | errStr  | String | Error message if any error occurred |
+
+#### addListener(eventType, listener[, context])
+
+Adds a listener to be invoked when events of the specified type are emitted. An optional calling context may be provided. 
+
+Return a object like `{remove: function}` which can be used to remove this listener.
+
+#### once(eventType, listener[, context])
+
+Similar to addListener, except that the listener is removed after it is invoked once.
+
+#### removeAllListeners()
+
+Removes all of the registered listeners, including those registered as listener maps.
 
 ## Installation
 
@@ -313,47 +473,36 @@ $ npm install react-native-wechat --save
 
 ## Community
 
-#### IRC
+- [Join us at gitter](https://gitter.im/weflex/react-native-wechat?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+- QQ Group: 336021910
 
-<a href="http://qm.qq.com/cgi-bin/qm/qr?k=cg3irEFCGxjkm2YJCt5V9OeJA1pNo5Ui"><img width="200" src="./qrcode_qq.jpg"></a>
-
-#### Tutorials
-
-- [react-native-wechat微信组件的使用](http://www.jianshu.com/p/3f424cccb888)
-- [超详细React Native实现微信好友/朋友圈分享功能-Android/iOS双平台通用](http://www.jianshu.com/p/ce5439dd1f52)
-- [柳轩涤俗 - 微信登录](http://www.cnblogs.com/zhangdw/p/6194345.html)
-
-#### Who use it
-
-<a href="https://github.com/attentiveness/reading"><img height="80" width="80" src="https://raw.githubusercontent.com/attentiveness/reading/master/Reading_Logo.png"></a>
-<a href="https://github.com/lipeiwei-szu/ReactNativeOne"><img height="80" width="80" src="http://android-artworks.25pp.com/fs08/2017/05/22/3/110_ed42e5c8f701ae26be6b0c423cb51858_con_130x130.png"></a>
+## Who Use It
+- [reading: iReading App Write In React-Native](https://github.com/attentiveness/reading)
 
 ## Authors
 
-| GitHub        | Role       | Email                 |
-|---------------|------------|-----------------------|
-| [@yorkie]     | Author     | yorkiefixer@gmail.com |
-| [@xing-zheng] | Emeriti    |                       |
-| [@tdzl2003]   | Emeriti    | tdzl2003@gmail.com    |
-
-[@yorkie]: https://github.com/yorkie
-[@xing-zheng]: https://github.com/xing-zheng
-[@tdzl2003]: https://github.com/tdzl2003
+- [Deng Yun]
+- [Xing Zhen]
+- [Yorkie Liu]
 
 ## License
 
-MIT
+MIT @ [WeFlex], Inc
 
-[react-native-wechat]: https://github.com/yorkie/react-native-wechat
+[react-native-wechat]: https://github.com/weflex/react-native-wechat
 [npm-image]: https://img.shields.io/npm/v/react-native-wechat.svg?style=flat-square
 [npm-url]: https://npmjs.org/package/react-native-wechat
-[travis-image]: https://img.shields.io/travis/yorkie/react-native-wechat.svg?style=flat-square
-[travis-url]: https://travis-ci.org/yorkie/react-native-wechat
-[david-image]: http://img.shields.io/david/yorkie/react-native-wechat.svg?style=flat-square
-[david-url]: https://david-dm.org/yorkie/react-native-wechat
+[travis-image]: https://img.shields.io/travis/weflex/react-native-wechat.svg?style=flat-square
+[travis-url]: https://travis-ci.org/weflex/react-native-wechat
+[david-image]: http://img.shields.io/david/weflex/react-native-wechat.svg?style=flat-square
+[david-url]: https://david-dm.org/weflex/react-native-wechat
 [downloads-image]: http://img.shields.io/npm/dm/react-native-wechat.svg?style=flat-square
 [downloads-url]: https://npmjs.org/package/react-native-wechat
-[React Native]: https://github.com/facebook/react-native
+[Deng Yun]: https://github.com/tdzl2003
+[Xing Zhen]: https://github.com/xing-zheng
+[Yorkie Liu]: https://github.com/yorkie
+[WeFlex]: https://github.com/weflex
 [react-native-cn]: https://github.com/reactnativecn
 [WeChat SDK]: https://open.weixin.qq.com/cgi-bin/showdocument?action=dir_list&t=resource/res_list&verify=1&id=1417674108&token=&lang=zh_CN
-[Linking Libraries iOS Guidance]: https://developer.apple.com/library/ios/recipes/xcode_help-project_editor/Articles/AddingaLibrarytoaTarget.html
+[Linking Libraries iOS Guidance]:
+https://developer.apple.com/library/ios/recipes/xcode_help-project_editor/Articles/AddingaLibrarytoaTarget.html
